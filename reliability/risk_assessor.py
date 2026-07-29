@@ -80,7 +80,13 @@ def assess_risk(
     # ----------------------------
     # Auto-fix policy
     # ----------------------------
-    should_autofix = level == "low"
+    # Tightened: "low" level alone (score >= 75) was too permissive — a single
+    # Medium issue (score 80) would auto-apply. Require a stronger score and
+    # no Medium/High severity issues before trusting the fix automatically.
+    has_serious_issue = any(
+        str(i.get("severity", "")).lower() in {"medium", "high"} for i in issues
+    )
+    should_autofix = score >= 90 and not has_serious_issue
 
     if not reasons:
         reasons.append("No significant risks detected.")

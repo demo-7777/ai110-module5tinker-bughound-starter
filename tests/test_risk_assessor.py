@@ -36,6 +36,21 @@ def test_high_severity_issue_drives_score_down():
     assert risk["level"] in ("medium", "high")
 
 
+def test_single_medium_issue_does_not_autofix():
+    # Guardrail (Part 3): a lone Medium issue scores 80 -> "low" level, but the
+    # tightened auto-fix policy must still defer to a human. Before the change,
+    # should_autofix was `level == "low"`, so this would have auto-applied.
+    original = "def f():\n    return 1\n"
+    fixed = "def f():\n    return 1\n"
+    risk = assess_risk(
+        original_code=original,
+        fixed_code=fixed,
+        issues=[{"type": "Maintainability", "severity": "Medium", "msg": "TODO"}],
+    )
+    assert risk["level"] == "low"
+    assert risk["should_autofix"] is False
+
+
 def test_missing_return_is_penalized():
     original = "def f(x):\n    return x + 1\n"
     fixed = "def f(x):\n    x + 1\n"

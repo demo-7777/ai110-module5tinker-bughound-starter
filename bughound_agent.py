@@ -188,14 +188,20 @@ class BugHoundAgent:
         return None
 
     def _normalize_issues(self, arr: List[Any]) -> List[Dict[str, str]]:
+        valid_severities = {"Low", "Medium", "High"}
         issues: List[Dict[str, str]] = []
         for item in arr:
             if not isinstance(item, dict):
                 continue
+            # Reliability: don't trust the model's severity blindly. Anything
+            # outside the allowed set becomes a conservative "Medium".
+            severity = str(item.get("severity", "Unknown")).strip().capitalize()
+            if severity not in valid_severities:
+                severity = "Medium"
             issues.append(
                 {
                     "type": str(item.get("type", "Issue")),
-                    "severity": str(item.get("severity", "Unknown")),
+                    "severity": severity,
                     "msg": str(item.get("msg", "")).strip(),
                 }
             )
